@@ -1,0 +1,111 @@
+import java.awt.event.KeyEvent;
+
+public class YourNameHereGame extends ScrollingGame {
+		                           
+	private final String USER_IMG = "user.gif";    //ADD others for Avoid/Get items
+	private final String GET_IMG = "get.gif";
+	private final String AVOID_IMG = "avoid.gif";
+	
+	private final String SPLASH = "ink.png";
+	
+	private final int MAX_NEW = 4; //a limit so new column is not filled
+	
+	private int score;
+	private int count;
+
+	public YourNameHereGame() {
+		this(H_DIM, W_DIM, U_ROW);
+	}
+		
+	public YourNameHereGame(int hdim, int wdim, int urow) {
+		super.init(hdim, wdim, urow);
+	}
+	
+	/******************** Methods **********************/
+	
+	// update game state to reflect adding in new cells in the right-most column
+	public void populateRightEdge() {
+
+	}
+	
+	// updates the game state to reflect scrolling left by one column
+	public void scrollLeft() {
+
+	}
+	
+	// returns the user image
+	public String getUserImg() {
+		return USER_IMG;
+	}
+	
+	/* handleCollision()
+	 * handle a collision between the user and an object in the game
+	 */    
+	public void handleCollision() {
+
+		
+	}
+	
+	//---------------------------------------------------//
+	
+	// handles actions upon mouse click in game
+	public void handleMouseClick() {
+		
+		Location loc = grid.checkLastLocationClicked();
+		
+		if (loc != null)
+			System.out.println("You clicked on a square " + loc);
+	
+	}
+	
+	// handles actions upon key press in game
+	public void handleKeyPress() {
+			
+		int key = grid.checkLastKeyPressed();
+		
+		//use Java constant names for key presses
+		//http://docs.oracle.com/javase/7/docs/api/constant-values.html#java.awt.event.KeyEvent.VK_DOWN
+		
+		// Q for quit
+		if (key == KeyEvent.VK_Q)
+			System.exit(0);
+		
+		else if (key == KeyEvent.VK_S)
+			System.out.println("could save the screen: add the call");
+		
+		/* To help you with step 9: 
+		   use the 'T' key to help you with implementing speed up/slow down/pause
+    	   this prints out a debugging message */
+		else if (key == KeyEvent.VK_T)  {
+			boolean interval =  (timerClicks % FACTOR == 0);
+			System.out.println("timerDelay " + timerDelay + " msElapsed reset " + 
+				msElapsed + " interval " + interval);
+		} 
+	}
+	
+	// return the "score" of the game 
+	private int getScore() {
+		return 0;    //dummy for now
+	}
+	
+	// update the title bar of the game window 
+	public void updateTitle() {
+		grid.setTitle("Scrolling Game:  " + getScore());
+	}
+	
+	// return true if the game is finished, false otherwise
+	//      used by play() to terminate the main game loop 
+	public boolean isGameOver() {
+		return false;
+	}
+	
+	// display the intro screen blank for now
+	public void displayIntro(){
+		
+	}
+	
+	// display the game over screen, blank for now
+	public void displayOutcome() {
+		
+	}
+}

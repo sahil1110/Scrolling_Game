@@ -1,0 +1,300 @@
+// Sahil Lalwani
+
+import java.awt.event.KeyEvent;
+import java.awt.Color;
+
+public class BaseGame extends ScrollingGame {
+		                           
+	private final String USER_IMG = "user.gif";    // specify user image file
+	                                               // ADD others for Avoid/Get items	
+    private final String GET_IMG= "get.gif"; // specify GET item image
+    private final String AVOID_IMG= "avoid.gif"; // specify AVOID item image
+    private final String BG_IMG= "ink.png"; // specify splash screen image
+    private int score; // keeps track of the user's score
+    private int num_avoid; // keeps track of the number of avoid objects the user has collided with
+    private Location user_loc= new Location (U_ROW, 0); // Keeps track of user object location in the multi-dimensional array grid
+    													// using row and column of user object in the game grid array
+    private final int RAND_TOTAL_ODDS= 5; // May be used to change the probability of randomly generating get and avoid images in the right-most column
+                                          // Increasing its value will decrease the odds of generating GET or AVOID objects, thus leading to more blank
+                                          // spaces overall in the game
+    private final int RAND_GET= 0;
+    private final int RAND_AVOID= 1;
+    private boolean grid_status= false;  // Boolean value to keep track of grid's visibility in the game 
+    private String file_name= "screenshot"; // Generic file name syntax part of all game screenshots
+    private int idx_add= 1; // Used to save unique file names for all screenshots taken during a game
+	                                                                                              
+	public BaseGame() {
+		this(H_DIM, W_DIM, U_ROW);
+	}
+		
+	public BaseGame(int hdim, int wdim, int urow) {
+		super.init(hdim, wdim, urow);
+	}
+	
+	/******************** Methods **********************/
+	
+	// update game state to reflect adding in new cells in the right-most column
+	public void populateRightEdge() {
+		int count=0;
+		int rand_num= 0;
+        for (int i=0; i<H_DIM; i++) {
+           if (i==H_DIM-1) {
+           	   path_clear(count);   
+           }
+           rand_num= super.rand.nextInt(RAND_TOTAL_ODDS);	
+           count+= fill_elements(rand_num, i);
+        }
+ 	}
+ 	
+ 	/*
+ 	Helper method: updates game state to reflect randomly populating right-most column of the grid with get and avoid object images, using the random
+ 	number generated in populateRightEdge() method
+ 	*/
+ 	
+ 	public int fill_elements(int rand_num, int i) {
+ 	   	if (rand_num==RAND_GET) {
+           	grid.setCellImage(new Location(i, W_DIM-1), GET_IMG);
+           	return 1;
+ 	   }
+ 	   else if (rand_num==RAND_AVOID) {
+ 	   	   grid.setCellImage(new Location(i, W_DIM-1), AVOID_IMG);
+ 	   	   return 0;
+ 	   }
+ 	   else {
+ 	   	   grid.setCellImage(new Location(i, W_DIM-1), null);
+ 	   	   return 1;
+ 	   }
+      }
+ 	
+      
+    /*
+    Takes the count of the number of get objects and blank spaces created in one instance of random population of the right edge as a parameter and 
+    ensures that the user always has a path through the game without colliding with the avoid object.
+    */
+ 	public void path_clear(int count) {
+ 	    if (count==0) {
+ 	        super.grid.setCellImage(new Location(H_DIM-1, W_DIM-1), GET_IMG);	
+ 	    }
+ 	}
+	
+	// updates the game state to reflect scrolling left by one column
+	public void scrollLeft() {
+		for (int i=0; i<H_DIM; i++) {
+		    for (int j=1; j<W_DIM; j++) {
+		    	String img= grid.getCellImage(new Location(i,j));
+
+		        if (!condition_user_image(img) && !record_collision(new Location(i,j))) {
+		            grid.setCellImage(new Location(i, j-1), img);	
+		        }
+		        else if(record_collision(new Location(i,j))) {
+		           	handleCollision(new Location(i,j));
+		        }
+		    }
+		}
+	}
+	
+	/*
+	Helper method: checks if a string, representing an image file name, is the same as the USER_IMG
+	*/
+	public boolean condition_user_image(String img) {
+		return USER_IMG.equals(img); // This method has been primarily added to reduce redundancy
+	}
+	
+	/*
+	Returns true if a get or avoid object collides with the user object while these GET and AVOID objects are scrolling to the left
+	*/
+	public boolean record_collision(Location loc) {
+	    return USER_IMG.equals(grid.getCellImage(new Location(loc.getRow(), loc.getCol()-1)));	
+	}
+	
+	// returns the user image
+	public String getUserImg() {
+		return USER_IMG;
+	}
+	
+	/* handleCollision()
+	 * handle a collision between the user and an object in the game
+	 */    
+	public void handleCollision(Location loc) {
+       String img= grid.getCellImage(new Location(loc.getRow(), loc.getCol())); 
+       if (GET_IMG.equals(img)) {
+       	   score+=10;
+       }
+	   else if (AVOID_IMG.equals(img)) {
+	   	   num_avoid+=1;   
+	   }
+	}
+	
+	//---------------------------------------------------//
+	
+	// handles actions upon mouse click in game
+	public void handleMouseClick() {
+		
+		Location loc = grid.checkLastLocationClicked();
+		
+		if (loc != null)
+			System.out.println("You clicked on a square " + loc);
+	}
+	
+	// handles actions upon key press in game
+	public void handleKeyPress() {
+			
+		int key = grid.checkLastKeyPressed();
+		
+		//use Java constant names for key presses
+		//http://docs.oracle.com/javase/7/docs/api/constant-values.html#java.awt.event.KeyEvent.VK_DOWN
+		
+		// Q for quit
+		if (key == KeyEvent.VK_Q)
+			System.exit(0);
+		
+		else if (key == KeyEvent.VK_S) {
+			grid.save(file_name+idx_add+".png");
+		    idx_add++;
+		}
+		else if (key==KeyEvent.VK_UP) 
+			change_user_location('u');
+		
+		else if (key==KeyEvent.VK_DOWN) 
+			change_user_location('d');
+		
+		else if (key==KeyEvent.VK_LEFT) 
+			change_user_location('l');
+		
+		else if (key==KeyEvent.VK_RIGHT) 
+			change_user_location('r');
+		
+		else if (key==KeyEvent.VK_P) {
+			pause_screen();
+		}
+		else if (key==KeyEvent.VK_D) {
+			draw_grids();
+		}
+		
+		else if (key==KeyEvent.VK_PERIOD) {
+			if ((timerDelay-1)!=0)
+			timerDelay-=15;
+		}
+		
+		else if (key==KeyEvent.VK_COMMA) {
+			timerDelay+=15;
+		}
+		
+		/* To help you with step 9: 
+		   use the 'T' key to help you with implementing speed up/slow down/pause
+    	   this prints out a debugging message */
+		else if (key == KeyEvent.VK_T)  {
+			boolean interval =  (timerClicks % FACTOR == 0);
+			System.out.println("timerDelay " + timerDelay + " msElapsed reset " + 
+				msElapsed + " interval " + interval);
+		} 
+	}
+	
+	/*
+	Helper method: Pauses/resumes the screen when the user presses 'p' key
+	*/
+	public void pause_screen() {
+		boolean pause_state= true;
+	    while (pause_state) {
+	        grid.sleep(timerDelay);
+	        msElapsed+=timerDelay;
+	        if (grid.checkLastKeyPressed()==KeyEvent.VK_P) {
+	            pause_state= false;	
+	        }
+	    }
+	}
+	
+	/*
+	Helper method: Draws/removes the grid when the user presses 'd' key
+	*/
+	public void draw_grids() {
+	    if (!grid_status) {
+	        grid.setLineColor(Color.red);
+	        grid_status= true;
+	      }
+	    else{
+	        grid.setLineColor(grid.DEFAULT_COLOR);
+	        grid_status= false;
+	    }
+	    }
+	
+	/*
+    Helper method: Updates the game state to reflect a change in user object location when the user presses up, down, left or right keys,
+    and also accounts for any collisions with GET/AVOID objects corresponding to this change in user location by updating the user score 
+    or the number of avoid objects 
+	*/
+	public void change_user_location(char command) {
+		 grid.setCellImage(user_loc, null);
+		 int row= user_loc.getRow();
+		 int column= user_loc.getCol();
+	     if (command=='u') {
+	     	if (row!=0) { 
+	     	user_loc= new Location(row-1, column);
+	     }
+	     }
+	     
+	     else if (command=='d') {
+	     	if (row!=H_DIM-1) {
+	     	user_loc= new Location(row+1, column);
+	     }
+	     }
+	     
+	     else if (command=='l') {
+	     	if (column!=0) { 
+	     	user_loc= new Location(row, column-1);
+	     }
+	     }
+	     
+	     else if (command=='r') {
+	     	if (column!=W_DIM-1) { 
+	     	user_loc= new Location(row, column+1);
+	     }
+	     }
+	     handleCollision(user_loc);
+	     grid.setCellImage(user_loc, USER_IMG);
+	}
+	
+	// return the "score" of the game 
+	private int getScore() {
+		return score;    //dummy for now
+	}
+	
+	// update the title bar of the game window 
+	public void updateTitle() {
+		grid.setTitle("Scrolling Game:  " + getScore());
+	}
+	
+	// return true if the game is finished, false otherwise
+	//      used by play() to terminate the main game loop 
+	public boolean isGameOver() {
+		return score==100||num_avoid==10;
+	}
+	
+	// display the intro screen blank for now
+	public void displayIntro(){
+		grid.setSplash(BG_IMG);
+		boolean pause_screen= true;
+		while (pause_screen) {
+			grid.sleep(timerDelay); // pause for some time (smooth animation)
+			if (grid.checkLastLocationClicked()!=null) {
+			    pause_screen= false;
+			    grid.setSplash(null);
+			}
+		}
+		 	 
+	    
+	}
+	
+	// display the game over screen, blank for now
+	public void displayOutcome() {
+		grid.setSplash(BG_IMG);
+		boolean pause_screen= true;
+		while (pause_screen) {
+			grid.sleep(timerDelay); // pause for some time (smooth animation)
+			if (grid.checkLastLocationClicked()!=null) {
+			    pause_screen= false;
+			    System.exit(0);
+			}
+		}
+	}
+}
